@@ -1,12 +1,4 @@
 # Final project dw
-# Oct 21, 2022
-
-# I joined four subqueries A to D based on customer level, you can run each table separately.
-# You may not create the view successfully due to mysql version. So you can run them one by one to debug.
-# If you have any questions, please tell me in the group chat.
-# I can't find some interesting queries and visualization topics right now, 
-# so hope you guys can come up with some interesting questions on Q2 and I can help with the query.
-# Tableau visualization, hope someone can do it.
 
 # Let me explain the meaning of some variables for easy understanding. 
 # Subquery A: Numb_Invo in table A is the number of orders the user has purchased, 
