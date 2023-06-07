@@ -1,0 +1,159 @@
+import pandas as pd
+import json
+import gzip
+
+def parse(path):
+  g = gzip.open(path, 'rb')
+  for l in g:
+    yield json.loads(l)
+
+def getDF(path):
+  i = 0
+  df = {}
+  for d in parse(path):
+    df[i] = d
+    i += 1
+  return pd.DataFrame.from_dict(df, orient='index')
+
+df = getDF('Video_Games_5.json.gz')
+
+over3 = df[df['overall'] > 4]
+under3 = df[df['overall'] < 2]
+over3.head()
+over3.shape
+
+subset_size = 20000
+
+# Randomly subset the data
+over3 = over3.sample(n=subset_size, random_state=42)
+under3 = under3.sample(n=subset_size,random_state=42)
+
+# filter headlines
+# for loop to filter dataset by keywords
+
+keyword_list = ['bad','like','love','game']
+
+#create an empty dataframe called result 
+#for each keyword in my keyword list, if keyword is in text
+#then we append this row to result 
+
+
+
+result = pd.DataFrame() 
+
+for index, row in under3.iterrows():
+    if pd.isnull(row['reviewText']):
+        continue
+    text = row['reviewText']
+    for keyword in keyword_list:
+        if keyword in text:
+            result = pd.concat([result, row.to_frame().T], ignore_index=True)
+        else:
+            continue
+           
+           
+           
+ result.drop_duplicates(subset='reviewText', keep='first', inplace=True)
+ print(len(result))
+result.head()
+import re
+from sklearn import feature_extraction 
+stop_words = feature_extraction.text.ENGLISH_STOP_WORDS
+from nltk.stem import PorterStemmer
+from nltk.stem import WordNetLemmatizer
+
+def preprocess(text):
+  text = text.lower() #lowercase
+  text = re.sub(r'[^\w\s]', '', text) #remove punctuations
+  text = re.sub(r'\d+', '', text) #remove numbers
+  text = " ".join(text.split()) #stripWhitespace
+  text = text.split()
+  l_keyword_list = [element.lower() for element in keyword_list]
+  new_stop_words = frozenset(stop_words.union(l_keyword_list)) 
+  text = [x for x in text if x not in new_stop_words] #remove stopwords
+  text = [x for x in text if x not in ["game", "gaming"]] #remove task specific stopwords
+  text = " ".join(text)
+  # stemmer_ps = PorterStemmer()  
+  # text = [stemmer_ps.stem(word) for word in text.split()] #stemming
+  # text = " ".join(text)
+  # lemmatizer = WordNetLemmatizer()
+  # text = [lemmatizer.lemmatize(word) for word in text.split()]  #lemmatization
+  # text = " ".join(text)
+  
+  return(text)
+  
+under3['text_processed']=under3['reviewText'].apply(lambda x:preprocess(str(x)))
+under3['text_processed']=under3['text_processed'].apply(lambda x:x.split())
+
+from gensim import corpora
+dictionary = corpora.Dictionary(under3['text_processed'])
+dictionaryDF = pd.DataFrame()
+dictionaryDF['id']=dictionary.keys()
+dictionaryDF['word']=dictionary.values()
+dictionaryDF
+
+dictionary.filter_extremes(no_below=100, no_above=100000)
+# no_below (int, optional) – Keep tokens which are contained in at least no_below documents.
+# no_above (float, optional) – Keep tokens which are contained in no more than no_above documents (fraction of total corpus size, not an absolute number).
+dictionaryDF = pd.DataFrame()
+dictionaryDF['id']=dictionary.keys()
+dictionaryDF['word']=dictionary.values()
+dictionaryDF
+
+dictionary = corpora.Dictionary(under3['text_processed'])
+under3['text_ids']=under3['text_processed'].apply(lambda x:dictionary.doc2bow(x))
+
+from gensim import models
+num_topics=10
+ldamodel = models.ldamodel.LdaModel(under3['text_ids'], num_topics = num_topics, id2word=dictionary, passes=1, random_state=123)
+topics = ldamodel.print_topics(num_words=8)
+for topic in topics:
+    print(topic)
+    
+    
+from gensim import models
+ldamodel.save('model.lda')
+ldamodel =  models.LdaModel.load('model.lda')
+pd.DataFrame(ldamodel.get_topics(), columns=ldamodel.id2word.values(), index=[f'topic {i}' for i in range(ldamodel.num_topics)])
+
+subset_size = 50000
+
+# Randomly subset the data
+subset = df.sample(n=subset_size, random_state=42)
+keyword_list = ['good','like','love']
+
+#create an empty dataframe called result 
+#for each keyword in my keyword list, if keyword is in text
+#then we append this row to result 
+
+
+
+result2 = pd.DataFrame() 
+
+for index, row in over3.iterrows():
+    if pd.isnull(row['reviewText']):
+        continue
+    text = row['reviewText']
+    for keyword in keyword_list:
+        if keyword in text:
+            result2 = pd.concat([result2, row.to_frame().T], ignore_index=True)
+        else:
+            continue
+result2.drop_duplicates(subset='reviewText', keep='first', inplace=True)
+over3['text_processed']=over3['reviewText'].apply(lambda x:preprocess(str(x)))
+over3['text_processed']=over3['text_processed'].apply(lambda x:x.split())
+from gensim import corpora
+dictionary = corpora.Dictionary(over3['text_processed'])
+dictionaryDF = pd.DataFrame()
+dictionaryDF['id']=dictionary.keys()
+dictionaryDF['word']=dictionary.values()
+dictionaryDF
+dictionary = corpora.Dictionary(over3['text_processed'])
+over3['text_ids']=over3['text_processed'].apply(lambda x:dictionary.doc2bow(x))
+
+from gensim import models
+num_topics=10
+ldamodel = models.ldamodel.LdaModel(over3['text_ids'], num_topics = num_topics, id2word=dictionary, passes=1, random_state=123)
+topics = ldamodel.print_topics(num_words=8)
+for topic in topics:
+    print(topic)
