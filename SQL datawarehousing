@@ -1,6 +1,13 @@
-# Final project dw
+# A quick intro of the project: 
+# Raw dataset was given regarding the sales history of an album shop. It included 11 tables. The goal was to find useful business insights from it. 
 
-# Let me explain the meaning of some variables for easy understanding. 
+# Method:
+# After date warehouse created, performed querying to find sales trend in different genres, years, and customer ages
+
+# Impact:
+# Found that customers from different countries have different music taste. Customers from USA preferred country and rock music. Also found the trend in the album selling history in different years.
+
+# A quick breakdown of my codes: 
 # Subquery A: Numb_Invo in table A is the number of orders the user has purchased, 
 #          SupportRepId is which employee supported him, and Avg_Days is the average number of days between each order. 
 #          For example, customer1 has a total of seven orders, then there ar e six interval dates. Then I calculated the average.
